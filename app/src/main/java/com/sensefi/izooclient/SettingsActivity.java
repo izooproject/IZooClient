@@ -3,29 +3,26 @@ package com.sensefi.izooclient;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
-
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.view.KeyEvent;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+
+import com.sensefi.izooclient.database.DatabaseHelper;
+import com.sensefi.izooclient.view.SettingsView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,11 +40,12 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
     private View mProgressView;
     private View mSettingsFormView;
     Intent intent;
+    DatabaseHelper databaseHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-
+        databaseHelper = new DatabaseHelper(this);
         mIpAddress = (EditText) findViewById(R.id.ipAddress);
         mPort = (EditText) findViewById(R.id.port);
 
@@ -82,9 +80,11 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
         boolean cancel = false;
         View focusView = null;
 
+        Log.d("ipAddress", ipAddress);
+        Log.d("port", port);
 
-        if (TextUtils.isEmpty(ipAddress) ) {
-            mPort.setError(getString(R.string.error_invalid_password));
+        if (TextUtils.isEmpty(port) ) {
+            mPort.setError(getString(R.string.error_field_required));
             focusView = mPort;
             cancel = true;
         }
@@ -196,18 +196,22 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
      */
     public class SaveTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mEmail;
-        private final String mPassword;
+        private final String mIpAddress;
+        private final String mPort;
 
-        SaveTask(String email, String password) {
-            mEmail = email;
-            mPassword = password;
+        SaveTask(String ipAddress, String port) {
+            mIpAddress = ipAddress;
+            mPort = port;
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
+            SettingsView settingsView = new SettingsView();
+            settingsView.setIpAddress(mIpAddress);
+            settingsView.setPort(mPort);
+            Log.d("DB Status", "Pre Calling DB");
+            return databaseHelper.addSettingsDetail(settingsView);
 
-            return true;
         }
 
         @Override
@@ -216,7 +220,10 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
             showProgress(false);
 
             if (success) {
+                databaseHelper.getAllStudentsList();
                 startActivity(intent);
+            } else {
+                Log.d("DB Status", "DataBase Problem");
             }
         }
 
