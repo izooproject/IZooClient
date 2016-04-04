@@ -43,7 +43,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
 
     private UserLoginTask mAuthTask = null;
-
+//TEST
     // UI references.
     private AutoCompleteTextView userNameView;
     private EditText mPasswordView;
