@@ -121,7 +121,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /**
-     * Used to delete particular student entry
+     * Used to delete particular settings entry
      *
      * @param id
      */
@@ -131,6 +131,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_SETTINGS, KEY_ID + " = ?",
                 new String[] { String.valueOf(id) });
+    }
+
+    /**
+     * Used to delete all settings entry
+     *
+     *
+     */
+    public void deleteAllEntry() {
+        Log.d("Inside Delete All:","Delete Begins");
+        // delete row in students table based on id
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_SETTINGS, null,null);
+        Log.d("Inside Delete All:", "Delete Completed");
     }
 
     /**
@@ -168,6 +181,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @return
      */
     public List<SettingsView> getAllStudentsList() {
+        Log.d("Get Settings:","Fetch Begins");
         List<SettingsView> settingsViewList = new ArrayList<SettingsView>();
 
         String selectQuery = "SELECT  * FROM " + TABLE_SETTINGS;
@@ -192,7 +206,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 settingsViewList.add(settingsView);
             } while (c.moveToNext());
         }
-
+        Log.d("Get Settings:","Fetch Ends");
         return settingsViewList;
     }
 }

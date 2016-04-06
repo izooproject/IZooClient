@@ -3,27 +3,27 @@ package com.sensefi.izooclient;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
-
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.sensefi.izooclient.database.DatabaseHelper;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -32,8 +32,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -50,10 +48,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
     Intent intent;
+    Button settingsButton;
+    DatabaseHelper databaseHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        databaseHelper = new DatabaseHelper(this);
         // Set up the login form.
         userNameView = (AutoCompleteTextView) findViewById(R.id.userName);
         populateAutoComplete();
@@ -68,7 +70,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         });
 
-        Button settingsButton = (Button) findViewById(R.id.settingsButton);
+        settingsButton = (Button) findViewById(R.id.settingsButton);
         settingsButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -122,8 +124,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             cancel = true;
         }
 
-        if (cancel) {
+        if(databaseHelper.getAllStudentsList().isEmpty()) {
+            focusView = settingsButton;
+            Toast.makeText(getApplicationContext(), "Please Provide Settings", Toast.LENGTH_LONG).show();
+            cancel = true;
+        }
 
+        if (cancel) {
             focusView.requestFocus();
         } else {
             System.out.println("Validation Completed http call");
@@ -223,30 +230,32 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            System.out.println("Back Ground******");
-            String resultToDisplay = "";
-
+            Log.d("Login Activity:","doInBackground()");
             InputStream in = null;
             String response = null;
-
+            Boolean loginStatus = Boolean.FALSE;
             try {
 
-                URL url = new URL("http://192.168.0.104:8080/iZooService/IZOO/TEST/HELLO");
+                URL url = new URL(doGetUrl(mUserName, mPassword));
                 System.out.println(url);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                System.out.print("Made Request");
+                Log.d("Login Activity:","Pre Login Request");
                 in = new BufferedInputStream(urlConnection.getInputStream());
-                System.out.print("Got Response");
+                Log.d("Login Activity:", "Post Login Request");
                 response = getStringFromInputStream(in);
 
+                System.out.println("response:" + response);
+                if("SUCCESS".equals(response)) {
+                    loginStatus = Boolean.TRUE;
+                }
 
             } catch (Exception e ) {
 
                 System.out.println(e.getMessage());
 
             }
-            System.out.print("response-->"+response);
-            return true;
+            System.out.println("loginStatus:"+loginStatus);
+            return loginStatus;
         }
 
         @Override
@@ -255,11 +264,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
 
             if (success) {
-               // finish();
-                System.out.println("Request operation completed");
+                intent = new Intent(getApplicationContext(), DetailActivity.class);
+                startActivity(intent);
+                Toast.makeText(getApplicationContext(), "Login Success", Toast.LENGTH_LONG);
             } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
+                Toast.makeText(getApplicationContext(),"Login Failed",Toast.LENGTH_LONG);
             }
         }
 
@@ -298,6 +307,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         return sb.toString();
 
+    }
+
+    private String doGetUrl(String userName, String password) {
+        String baseUrl = databaseHelper.getAllStudentsList().get(0).getUrl();
+        return new StringBuilder(baseUrl).append("CHECK_USER?userName=").append(userName).append("&password=").append(userName).toString();
     }
 }
 

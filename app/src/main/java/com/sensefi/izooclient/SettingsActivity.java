@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.sensefi.izooclient.database.DatabaseHelper;
 import com.sensefi.izooclient.view.SettingsView;
@@ -48,9 +49,10 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
         databaseHelper = new DatabaseHelper(this);
         mIpAddress = (EditText) findViewById(R.id.ipAddress);
         mPort = (EditText) findViewById(R.id.port);
-
-
         Button mSaveButton = (Button) findViewById(R.id.save_button);
+
+        setSettingsValue();
+
         mSaveButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -63,7 +65,12 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
         mProgressView = findViewById(R.id.save_progress);
     }
 
-
+    private void setSettingsValue() {
+        List<SettingsView> settingsViewList = databaseHelper.getAllStudentsList();
+        SettingsView settingsView = settingsViewList.get(0);
+        mIpAddress.setText(settingsView.getIpAddress());
+        mPort.setText(settingsView.getPort());
+    }
     private void attemptSave() {
         if (mAuthTask != null) {
             return;
@@ -210,6 +217,7 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
             settingsView.setIpAddress(mIpAddress);
             settingsView.setPort(mPort);
             Log.d("DB Status", "Pre Calling DB");
+            databaseHelper.deleteAllEntry();
             return databaseHelper.addSettingsDetail(settingsView);
 
         }
@@ -220,10 +228,12 @@ public class SettingsActivity extends AppCompatActivity implements LoaderCallbac
             showProgress(false);
 
             if (success) {
-                databaseHelper.getAllStudentsList();
+                Log.d("DB Status", "DataBase Insertion Success");
+                Toast.makeText(getApplicationContext(), "Settings Added Succesfully", Toast.LENGTH_LONG).show();
                 startActivity(intent);
             } else {
                 Log.d("DB Status", "DataBase Problem");
+                Toast.makeText(getApplicationContext(), "Techinical Error!", Toast.LENGTH_LONG).show();
             }
         }
 

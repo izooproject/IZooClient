@@ -1,5 +1,7 @@
 package com.sensefi.izooclient.view;
 
+import android.util.Log;
+
 /**
  * Created by boobathiayyasamy on 05/04/16.
  */
@@ -30,5 +32,15 @@ public class SettingsView {
 
     public void setPort(String port) {
         this.port = port;
+    }
+
+    public String getUrl() {
+        String url = null;
+        if(ipAddress != null && port != null) {
+            url = new StringBuffer("http://").append(ipAddress).append(":").append(port)
+                    .append("/iZooService/IZOO/SERVICE/").toString();
+        }
+        Log.d("Url:",url);
+        return url;
     }
 }
